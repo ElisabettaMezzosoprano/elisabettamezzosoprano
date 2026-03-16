@@ -147,7 +147,7 @@
             <div class="contact-content">
                 <div class="contact-info">
                     <h3>Informazioni di Contatto</h3>
-                    <p><strong>Email:</strong> andrea46tarchiani@gmail.com</p>
+                    <p><strong>Email:</strong> <a class="contact-email" href="mailto:andrea46tarchiani@gmail.com">andrea46tarchiani@gmail.com</a></p>
                     <p><strong>Telefono:</strong> +39 340 27</p>
                     <p><strong>Ubicazione:</strong> Arezzo, Italia</p>
                 </div>
@@ -159,10 +159,10 @@
                     </div>
                 </div>
             </div>
-            <form class="contact-form">
-                <input type="text" placeholder="Il tuo nome" required>
-                <input type="email" placeholder="La tua email" required>
-                <textarea placeholder="Il tuo messaggio" rows="5" required></textarea>
+            <form class="contact-form" data-contact-email="andrea46tarchiani@gmail.com">
+                <input type="text" name="from_name" autocomplete="name" placeholder="Il tuo nome" required>
+                <input type="email" name="from_email" autocomplete="email" placeholder="La tua email" required>
+                <textarea name="message" placeholder="Il tuo messaggio" rows="5" required></textarea>
                 <button type="submit" class="submit-btn">Invia</button>
             </form>
         </div>
@@ -174,7 +174,6 @@
     </footer>
 
     <script src="script.js"></script>
-    <script type="text/javascript" src="https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js"></script>
 </body>
 
 </html>

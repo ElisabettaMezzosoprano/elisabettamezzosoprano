@@ -12,12 +12,7 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Gestione del form di contatto
-const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
-const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
-const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
-const emailJsConfigured = ![EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID].some(v => v.startsWith('YOUR_'));
-
+// Gestione del form di contatto: apre una bozza email (mailto) con i campi compilati.
 const contactForm = document.querySelector('.contact-form');
 if (contactForm) {
     contactForm.addEventListener('submit', function (e) {
@@ -26,49 +21,36 @@ if (contactForm) {
         // Mostra loading nel pulsante
         const submitBtn = this.querySelector('.submit-btn');
         const originalText = submitBtn.textContent;
-        submitBtn.textContent = 'Invio in corso...';
+        submitBtn.textContent = 'Apro email...';
         submitBtn.disabled = true;
 
-        // Se EmailJS non e' configurato, evita un errore e mostra un messaggio pulito.
-        if (!emailJsConfigured || typeof emailjs === 'undefined') {
+        const fromName = this.querySelector('input[name="from_name"]')?.value?.trim() || '';
+        const fromEmail = this.querySelector('input[name="from_email"]')?.value?.trim() || '';
+        const message = this.querySelector('textarea[name="message"]')?.value?.trim() || '';
+
+        const toEmail = this.dataset.contactEmail
+            || document.querySelector('.contact-email')?.textContent?.trim()
+            || 'andrea46tarchiani@gmail.com';
+
+        const subject = 'Contatto dal sito - Elisabetta Ricci';
+        const bodyLines = [
+            `Nome: ${fromName}`,
+            `Email: ${fromEmail}`,
+            '',
+            'Messaggio:',
+            message
+        ];
+        const body = bodyLines.join('\n');
+
+        const mailto = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        showModal('success', 'Bozza email pronta', 'Si aprirà la tua app email con il messaggio precompilato. Premi Invia per completare.');
+        setTimeout(() => {
+            window.location.href = mailto;
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
-            showModal('error', 'Contatto', 'Il form di contatto e\\' in aggiornamento. Per favore scrivi direttamente all\\'email indicata nella sezione Contatti.');
-            return;
-        }
-
-        emailjs.init(EMAILJS_PUBLIC_KEY);
-
-        // Raccogli i dati del form
-        const formData = {
-            from_name: this.querySelector('input[type="text"]').value,
-            from_email: this.querySelector('input[type="email"]').value,
-            message: this.querySelector('textarea').value,
-            to_email: 'andrea46tarchiani@gmail.com'
-        };
-
-        // Invia l'email
-        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, formData)
-            .then(function (response) {
-                // Ripristina il pulsante
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-
-                // Mostra modale di successo
-                showModal('success', 'Messaggio Inviato!', 'Grazie per il vostro messaggio! Vi contatterò il prima possibile.');
-
-                // Resetta il form
-                contactForm.reset();
-            }, function (error) {
-                // Ripristina il pulsante
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-
-                // Mostra modale di errore
-                showModal('error', 'Errore nell\'Invio', 'Si è verificato un errore nell\'invio del messaggio. Si prega di riprovare più tardi o contattarmi direttamente via email.');
-
-                console.error('EmailJS error:', error);
-            });
+            contactForm.reset();
+        }, 80);
     });
 }
 
