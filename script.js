@@ -13,6 +13,11 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 });
 
 // Gestione del form di contatto
+const EMAILJS_PUBLIC_KEY = 'YOUR_PUBLIC_KEY';
+const EMAILJS_SERVICE_ID = 'YOUR_SERVICE_ID';
+const EMAILJS_TEMPLATE_ID = 'YOUR_TEMPLATE_ID';
+const emailJsConfigured = ![EMAILJS_PUBLIC_KEY, EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID].some(v => v.startsWith('YOUR_'));
+
 const contactForm = document.querySelector('.contact-form');
 if (contactForm) {
     contactForm.addEventListener('submit', function (e) {
@@ -24,8 +29,15 @@ if (contactForm) {
         submitBtn.textContent = 'Invio in corso...';
         submitBtn.disabled = true;
 
-        // Inizializza EmailJS (sostituisci con la tua chiave pubblica)
-        emailjs.init('YOUR_PUBLIC_KEY');
+        // Se EmailJS non e' configurato, evita un errore e mostra un messaggio pulito.
+        if (!emailJsConfigured || typeof emailjs === 'undefined') {
+            submitBtn.textContent = originalText;
+            submitBtn.disabled = false;
+            showModal('error', 'Contatto', 'Il form di contatto e\\' in aggiornamento. Per favore scrivi direttamente all\\'email indicata nella sezione Contatti.');
+            return;
+        }
+
+        emailjs.init(EMAILJS_PUBLIC_KEY);
 
         // Raccogli i dati del form
         const formData = {
@@ -36,7 +48,7 @@ if (contactForm) {
         };
 
         // Invia l'email
-        emailjs.send('YOUR_SERVICE_ID', 'YOUR_TEMPLATE_ID', formData)
+        emailjs.send(EMAILJS_SERVICE_ID, EMAILJS_TEMPLATE_ID, formData)
             .then(function (response) {
                 // Ripristina il pulsante
                 submitBtn.textContent = originalText;
@@ -138,7 +150,7 @@ window.addEventListener('scroll', () => {
     let current = '';
     document.querySelectorAll('section').forEach(section => {
         const sectionTop = section.offsetTop;
-        if (pageYOffset >= sectionTop - 200) {
+        if (window.scrollY >= sectionTop - 200) {
             current = section.getAttribute('id');
         }
     });
@@ -151,12 +163,3 @@ window.addEventListener('scroll', () => {
     });
 });
 
-// Aggiungi stile active ai link
-const style = document.createElement('style');
-style.textContent = `
-    .nav-links a.active {
-        color: var(--secondary-color);
-        border-bottom: 2px solid var(--secondary-color);
-    }
-`;
-document.head.appendChild(style);
