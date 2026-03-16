@@ -44,23 +44,29 @@ if (contactForm) {
 
         const mailto = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-        showModal('success', 'Bozza email pronta', 'Si aprirà la tua app email con il messaggio precompilato. Premi Invia per completare.');
-        setTimeout(() => {
-            window.location.href = mailto;
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
-            contactForm.reset();
-        }, 80);
+        showModal(
+            'success',
+            'Bozza email pronta',
+            'Clicca "Apri email" per aprire la tua app email con il messaggio precompilato. Poi invia dall\\'app (il pulsante di invio e\\' li\\').',
+            { primaryLabel: 'Apri email', primaryHref: mailto }
+        );
+
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        contactForm.reset();
     });
 }
 
 // Funzione per mostrare il modale
-function showModal(type, title, message) {
+function showModal(type, title, message, options = {}) {
     // Rimuovi modale esistente se presente
     const existingModal = document.querySelector('.modal');
     if (existingModal) {
         existingModal.remove();
     }
+
+    const primaryLabel = options.primaryLabel || 'Chiudi';
+    const primaryHref = options.primaryHref || '';
 
     // Crea il modale
     const modal = document.createElement('div');
@@ -75,7 +81,7 @@ function showModal(type, title, message) {
                 <p>${message}</p>
             </div>
             <div class="modal-footer">
-                <button class="modal-btn">Chiudi</button>
+                <button class="modal-btn">${primaryLabel}</button>
             </div>
         </div>
     `;
@@ -98,7 +104,12 @@ function showModal(type, title, message) {
     }
 
     closeBtn.onclick = closeModal;
-    modalBtn.onclick = closeModal;
+    modalBtn.onclick = function () {
+        if (primaryHref) {
+            window.location.href = primaryHref;
+        }
+        closeModal();
+    };
 
     // Chiudi il modale cliccando fuori
     modal.onclick = function (event) {
@@ -106,6 +117,8 @@ function showModal(type, title, message) {
             closeModal();
         }
     };
+
+    return modal;
 }
 
 // Aggiungi animazione di scroll
