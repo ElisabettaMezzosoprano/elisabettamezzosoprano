@@ -75,10 +75,13 @@ if (contactForm) {
             submitBtn.textContent = originalText;
             submitBtn.disabled = false;
 
+            // Try to open the email client immediately (user gesture), then show a fallback action.
+            window.location.href = mailto;
+
             showModal(
                 'success',
                 'Bozza email pronta',
-                'Clicca "Apri email" per aprire la tua app email con il messaggio precompilato. Il sito non può verificare se l\\'invio avviene: la conferma la vedi solo nell\\'app email.',
+                'Si apre la tua app email con il messaggio precompilato. Il sito non può verificare l\\'invio: la conferma la vedi solo nell\\'app email. Se non si apre automaticamente, clicca "Apri email".',
                 { primaryLabel: 'Apri email', primaryHref: mailto }
             );
 
