@@ -17,19 +17,12 @@ const contactForm = document.querySelector('.contact-form');
 
 if (contactForm) {
     const submitBtn = contactForm.querySelector('.submit-btn');
+    const copyBtn = contactForm.querySelector('.contact-copy');
+    const gmailLink = contactForm.querySelector('.contact-gmail');
+    const outlookLink = contactForm.querySelector('.contact-outlook');
+    const mailtoLink = contactForm.querySelector('.contact-mailto');
 
-    function handleContactSubmit(e) {
-        e.preventDefault();
-
-        // Mostra loading nel pulsante
-        const originalText = submitBtn ? submitBtn.textContent : 'Invia';
-        if (!submitBtn) {
-            showModal('error', 'Contatto', 'Pulsante di invio non trovato. Ricarica la pagina e riprova.');
-            return;
-        }
-        submitBtn.textContent = 'Apro email...';
-        submitBtn.disabled = true;
-
+    function buildEmailDraft() {
         const fromName = contactForm.querySelector('input[name="from_name"]')?.value?.trim() || '';
         const fromEmail = contactForm.querySelector('input[name="from_email"]')?.value?.trim() || '';
         const message = contactForm.querySelector('textarea[name="message"]')?.value?.trim() || '';
@@ -49,28 +42,96 @@ if (contactForm) {
         const body = bodyLines.join('\n');
 
         const mailto = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const gmail = `https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(toEmail)}&su=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+        const outlook = `https://outlook.office.com/mail/deeplink/compose?to=${encodeURIComponent(toEmail)}&subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+
+        return { toEmail, subject, body, mailto, gmail, outlook };
+    }
+
+    function syncContactLinks() {
+        const draft = buildEmailDraft();
+        if (mailtoLink) mailtoLink.href = draft.mailto;
+        if (gmailLink) gmailLink.href = draft.gmail;
+        if (outlookLink) outlookLink.href = draft.outlook;
+    }
+
+    ['input', 'change', 'keyup'].forEach((evt) => {
+        contactForm.addEventListener(evt, syncContactLinks);
+    });
+    syncContactLinks();
+
+    async function copyDraftText() {
+        const draft = buildEmailDraft();
+        const text = `A: ${draft.toEmail}\nOggetto: ${draft.subject}\n\n${draft.body}\n`;
+
+        try {
+            if (navigator.clipboard && window.isSecureContext) {
+                await navigator.clipboard.writeText(text);
+                showModal('success', 'Copiato', 'Testo copiato negli appunti. Incollalo nella tua webmail (Gmail/Outlook).');
+                return;
+            }
+        } catch { }
+
+        // Fallback for non-secure contexts (e.g. file://)
+        const ta = document.createElement('textarea');
+        ta.value = text;
+        ta.setAttribute('readonly', '');
+        ta.style.position = 'fixed';
+        ta.style.left = '-9999px';
+        document.body.appendChild(ta);
+        ta.select();
+        try {
+            document.execCommand('copy');
+            showModal('success', 'Copiato', 'Testo copiato negli appunti. Incollalo nella tua webmail (Gmail/Outlook).');
+        } catch {
+            showModal('error', 'Copia non riuscita', 'Seleziona e copia manualmente l\\'indirizzo email nella sezione Contatti.');
+        } finally {
+            ta.remove();
+        }
+    }
+
+    function handleContactSubmit(e) {
+        e.preventDefault();
+
+        // Mostra loading nel pulsante
+        const originalText = submitBtn ? submitBtn.textContent : 'Invia';
+        if (!submitBtn) {
+            showModal('error', 'Contatto', 'Pulsante di invio non trovato. Ricarica la pagina e riprova.');
+            return;
+        }
+        submitBtn.textContent = 'Apro...';
+        submitBtn.disabled = true;
+
+        const draft = buildEmailDraft();
 
         showModal(
             'success',
-            'Bozza email pronta',
-            'Sto aprendo la tua app email con il messaggio precompilato. Invia dall\\'app email. Se non si apre automaticamente, clicca "Apri email".',
-            { primaryLabel: 'Apri email', primaryHref: mailto }
+            'Scegli come inviare',
+            'Apri Gmail o Outlook nel browser, oppure prova ad aprire l\\'app email. Se non hai nessuna app email, usa Gmail/Outlook o copia il testo.',
+            {
+                buttons: [
+                    { label: 'Apri Gmail', href: draft.gmail },
+                    { label: 'Apri Outlook', href: draft.outlook },
+                    { label: 'Apri email', href: draft.mailto },
+                    { label: 'Copia testo', action: 'copy' }
+                ]
+            }
         );
-
-        // Try to open the email client after the modal is on screen.
-        setTimeout(() => {
-            window.location.href = mailto;
-        }, 50);
 
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
-        contactForm.reset();
     }
 
     // Handle both clicking the button and pressing Enter in a field.
     contactForm.addEventListener('submit', handleContactSubmit);
     if (submitBtn) {
         submitBtn.addEventListener('click', handleContactSubmit);
+    }
+    if (copyBtn) {
+        copyBtn.addEventListener('click', (e) => {
+            e.preventDefault();
+            copyDraftText();
+        });
     }
 }
 
@@ -82,8 +143,23 @@ function showModal(type, title, message, options = {}) {
         existingModal.remove();
     }
 
-    const primaryLabel = options.primaryLabel || 'Chiudi';
-    const primaryHref = options.primaryHref || '';
+    const buttons = Array.isArray(options.buttons) && options.buttons.length
+        ? options.buttons
+        : [{ label: options.primaryLabel || 'Chiudi', href: options.primaryHref || '', action: '' }];
+
+    const footerButtonsHtml = buttons.map((b, idx) => {
+        const safeLabel = String(b.label || 'Chiudi');
+        const safeHref = b.href ? String(b.href) : '';
+        const safeAction = b.action ? String(b.action) : '';
+        const attrs = [
+            `class="modal-btn"`,
+            `data-modal-idx="${idx}"`,
+            safeHref ? `data-href="${safeHref.replace(/\"/g, '&quot;')}"` : '',
+            safeAction ? `data-action="${safeAction.replace(/\"/g, '&quot;')}"` : ''
+        ].filter(Boolean).join(' ');
+
+        return `<button ${attrs}>${safeLabel}</button>`;
+    }).join('');
 
     // Crea il modale
     const modal = document.createElement('div');
@@ -98,7 +174,7 @@ function showModal(type, title, message, options = {}) {
                 <p>${message}</p>
             </div>
             <div class="modal-footer">
-                <button class="modal-btn">${primaryLabel}</button>
+                ${footerButtonsHtml}
             </div>
         </div>
     `;
@@ -111,7 +187,7 @@ function showModal(type, title, message, options = {}) {
 
     // Gestisci la chiusura del modale
     const closeBtn = modal.querySelector('.close');
-    const modalBtn = modal.querySelector('.modal-btn');
+    const modalBtns = modal.querySelectorAll('.modal-btn');
 
     function closeModal() {
         modal.style.display = 'none';
@@ -121,12 +197,29 @@ function showModal(type, title, message, options = {}) {
     }
 
     closeBtn.onclick = closeModal;
-    modalBtn.onclick = function () {
-        if (primaryHref) {
-            window.location.href = primaryHref;
-        }
-        closeModal();
-    };
+    modalBtns.forEach((btn) => {
+        btn.onclick = function () {
+            const href = btn.getAttribute('data-href') || '';
+            const action = btn.getAttribute('data-action') || '';
+
+            if (action === 'copy') {
+                // Prefer the on-page copy button handler (same logic).
+                const copyBtn = document.querySelector('.contact-copy');
+                if (copyBtn) copyBtn.click();
+                closeModal();
+                return;
+            }
+
+            if (href) {
+                if (href.startsWith('mailto:')) {
+                    window.location.href = href;
+                } else {
+                    window.open(href, '_blank', 'noopener');
+                }
+            }
+            closeModal();
+        };
+    });
 
     // Chiudi il modale cliccando fuori
     modal.onclick = function (event) {

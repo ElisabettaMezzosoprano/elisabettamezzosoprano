@@ -461,6 +461,42 @@ h3 {
     filter: brightness(1.05);
 }
 
+.contact-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 0.75rem;
+    margin-top: 0.25rem;
+}
+
+.secondary-btn {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.5rem;
+    padding: 0.85rem 1rem;
+    border-radius: 999px;
+    border: 1px solid rgba(20, 17, 15, 0.18);
+    background: rgba(255, 255, 255, 0.92);
+    color: var(--ink);
+    text-decoration: none;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    font-size: 0.82rem;
+    cursor: pointer;
+    transition: transform 0.2s ease, filter 0.2s ease, border-color 0.2s ease;
+}
+
+.secondary-btn:hover {
+    transform: translateY(-1px);
+    filter: brightness(1.02);
+    border-color: rgba(200, 161, 82, 0.7);
+}
+
+.secondary-btn:active {
+    transform: translateY(0px);
+}
+
 /* Footer */
 .footer {
     background: linear-gradient(135deg, #2b0606, var(--brand));
@@ -592,7 +628,10 @@ h3 {
 
 .modal-footer {
     padding: 1rem 2rem 2rem;
-    text-align: center;
+    display: flex;
+    gap: 0.75rem;
+    flex-wrap: wrap;
+    justify-content: center;
 }
 
 .modal-btn {
