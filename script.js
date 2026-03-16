@@ -23,6 +23,10 @@ if (contactForm) {
 
         // Mostra loading nel pulsante
         const originalText = submitBtn ? submitBtn.textContent : 'Invia';
+        if (!submitBtn) {
+            showModal('error', 'Contatto', 'Pulsante di invio non trovato. Ricarica la pagina e riprova.');
+            return;
+        }
         submitBtn.textContent = 'Apro email...';
         submitBtn.disabled = true;
 
@@ -46,15 +50,17 @@ if (contactForm) {
 
         const mailto = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-        // Try to open the email client immediately (user gesture), then show a fallback action.
-        window.location.href = mailto;
-
         showModal(
             'success',
             'Bozza email pronta',
-            'Si apre la tua app email con il messaggio precompilato. Invia dall\\'app email. Se non si apre automaticamente, clicca "Apri email".',
+            'Sto aprendo la tua app email con il messaggio precompilato. Invia dall\\'app email. Se non si apre automaticamente, clicca "Apri email".',
             { primaryLabel: 'Apri email', primaryHref: mailto }
         );
+
+        // Try to open the email client after the modal is on screen.
+        setTimeout(() => {
+            window.location.href = mailto;
+        }, 50);
 
         submitBtn.textContent = originalText;
         submitBtn.disabled = false;
