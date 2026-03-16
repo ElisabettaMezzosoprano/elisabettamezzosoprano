@@ -15,27 +15,6 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
 // Gestione del form di contatto: apre una bozza email (mailto) con i campi compilati.
 const contactForm = document.querySelector('.contact-form');
 
-let emailJsLoadPromise = null;
-function loadEmailJs() {
-    if (typeof emailjs !== 'undefined') {
-        return Promise.resolve(emailjs);
-    }
-    if (emailJsLoadPromise) {
-        return emailJsLoadPromise;
-    }
-
-    emailJsLoadPromise = new Promise((resolve, reject) => {
-        const script = document.createElement('script');
-        script.src = 'https://cdn.jsdelivr.net/npm/@emailjs/browser@3/dist/email.min.js';
-        script.async = true;
-        script.onload = () => resolve(emailjs);
-        script.onerror = () => reject(new Error('EmailJS load failed'));
-        document.head.appendChild(script);
-    });
-
-    return emailJsLoadPromise;
-}
-
 if (contactForm) {
     const submitBtn = contactForm.querySelector('.submit-btn');
 
@@ -44,7 +23,7 @@ if (contactForm) {
 
         // Mostra loading nel pulsante
         const originalText = submitBtn ? submitBtn.textContent : 'Invia';
-        submitBtn.textContent = 'Invio...';
+        submitBtn.textContent = 'Apro email...';
         submitBtn.disabled = true;
 
         const fromName = contactForm.querySelector('input[name="from_name"]')?.value?.trim() || '';
@@ -54,11 +33,6 @@ if (contactForm) {
         const toEmail = contactForm.dataset.contactEmail
             || document.querySelector('.contact-email')?.textContent?.trim()
             || 'andrea46tarchiani@gmail.com';
-
-        const publicKey = (contactForm.dataset.emailjsPublicKey || '').trim();
-        const serviceId = (contactForm.dataset.emailjsServiceId || '').trim();
-        const templateId = (contactForm.dataset.emailjsTemplateId || '').trim();
-        const emailJsConfigured = Boolean(publicKey && serviceId && templateId);
 
         const subject = 'Contatto dal sito - Elisabetta Ricci';
         const bodyLines = [
@@ -72,51 +46,19 @@ if (contactForm) {
 
         const mailto = `mailto:${toEmail}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
 
-        if (!emailJsConfigured) {
-            submitBtn.textContent = originalText;
-            submitBtn.disabled = false;
+        // Try to open the email client immediately (user gesture), then show a fallback action.
+        window.location.href = mailto;
 
-            // Try to open the email client immediately (user gesture), then show a fallback action.
-            window.location.href = mailto;
+        showModal(
+            'success',
+            'Bozza email pronta',
+            'Si apre la tua app email con il messaggio precompilato. Invia dall\\'app email. Se non si apre automaticamente, clicca "Apri email".',
+            { primaryLabel: 'Apri email', primaryHref: mailto }
+        );
 
-            showModal(
-                'success',
-                'Bozza email pronta',
-                'Si apre la tua app email con il messaggio precompilato. Il sito non può verificare l\\'invio: la conferma la vedi solo nell\\'app email. Se non si apre automaticamente, clicca "Apri email".',
-                { primaryLabel: 'Apri email', primaryHref: mailto }
-            );
-
-            contactForm.reset();
-            return;
-        }
-
-        loadEmailJs()
-            .then((emailJs) => {
-                emailJs.init(publicKey);
-                return emailJs.send(serviceId, templateId, {
-                    from_name: fromName,
-                    from_email: fromEmail,
-                    message,
-                    to_email: toEmail
-                });
-            })
-            .then(() => {
-                showModal('success', 'Messaggio inviato', 'Grazie. Il messaggio è stato inviato con successo.');
-                contactForm.reset();
-            })
-            .catch((err) => {
-                console.error('Contact form send failed:', err);
-                showModal(
-                    'error',
-                    'Invio non riuscito',
-                    'Non è stato possibile inviare il messaggio dal sito. Puoi usare "Apri email" come alternativa.',
-                    { primaryLabel: 'Apri email', primaryHref: mailto }
-                );
-            })
-            .finally(() => {
-                submitBtn.textContent = originalText;
-                submitBtn.disabled = false;
-            });
+        submitBtn.textContent = originalText;
+        submitBtn.disabled = false;
+        contactForm.reset();
     }
 
     // Handle both clicking the button and pressing Enter in a field.
