@@ -37,26 +37,27 @@ function loadEmailJs() {
 }
 
 if (contactForm) {
-    contactForm.addEventListener('submit', function (e) {
+    const submitBtn = contactForm.querySelector('.submit-btn');
+
+    function handleContactSubmit(e) {
         e.preventDefault();
 
         // Mostra loading nel pulsante
-        const submitBtn = this.querySelector('.submit-btn');
-        const originalText = submitBtn.textContent;
+        const originalText = submitBtn ? submitBtn.textContent : 'Invia';
         submitBtn.textContent = 'Invio...';
         submitBtn.disabled = true;
 
-        const fromName = this.querySelector('input[name="from_name"]')?.value?.trim() || '';
-        const fromEmail = this.querySelector('input[name="from_email"]')?.value?.trim() || '';
-        const message = this.querySelector('textarea[name="message"]')?.value?.trim() || '';
+        const fromName = contactForm.querySelector('input[name="from_name"]')?.value?.trim() || '';
+        const fromEmail = contactForm.querySelector('input[name="from_email"]')?.value?.trim() || '';
+        const message = contactForm.querySelector('textarea[name="message"]')?.value?.trim() || '';
 
-        const toEmail = this.dataset.contactEmail
+        const toEmail = contactForm.dataset.contactEmail
             || document.querySelector('.contact-email')?.textContent?.trim()
             || 'andrea46tarchiani@gmail.com';
 
-        const publicKey = (this.dataset.emailjsPublicKey || '').trim();
-        const serviceId = (this.dataset.emailjsServiceId || '').trim();
-        const templateId = (this.dataset.emailjsTemplateId || '').trim();
+        const publicKey = (contactForm.dataset.emailjsPublicKey || '').trim();
+        const serviceId = (contactForm.dataset.emailjsServiceId || '').trim();
+        const templateId = (contactForm.dataset.emailjsTemplateId || '').trim();
         const emailJsConfigured = Boolean(publicKey && serviceId && templateId);
 
         const subject = 'Contatto dal sito - Elisabetta Ricci';
@@ -116,7 +117,13 @@ if (contactForm) {
                 submitBtn.textContent = originalText;
                 submitBtn.disabled = false;
             });
-    });
+    }
+
+    // Handle both clicking the button and pressing Enter in a field.
+    contactForm.addEventListener('submit', handleContactSubmit);
+    if (submitBtn) {
+        submitBtn.addEventListener('click', handleContactSubmit);
+    }
 }
 
 // Funzione per mostrare il modale
