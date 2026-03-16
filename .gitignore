@@ -1,0 +1,7 @@
+# OS/editor noise
+.DS_Store
+Thumbs.db
+
+# Scraped Instagram page assets (not needed for the site)
+images/elisabetta-instagram_files/
+images/**/*.download
