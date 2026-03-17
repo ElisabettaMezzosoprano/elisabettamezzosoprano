@@ -12,7 +12,32 @@ document.querySelectorAll('a[href^="#"]').forEach(anchor => {
     });
 });
 
-// Contatto email: gestito in HTML con link mailto.
+// Contatto email: gestito in HTML con link mailto (+ notifica di supporto).
+let emailNotificationTimeoutId = null;
+
+function showEmailNotification(message) {
+    const el = document.getElementById('email-notification');
+    if (!el) return;
+
+    el.textContent = message;
+    el.classList.add('is-visible');
+    el.setAttribute('aria-hidden', 'false');
+
+    if (emailNotificationTimeoutId) {
+        window.clearTimeout(emailNotificationTimeoutId);
+    }
+
+    emailNotificationTimeoutId = window.setTimeout(() => {
+        el.classList.remove('is-visible');
+        el.setAttribute('aria-hidden', 'true');
+    }, 9000);
+}
+
+document.querySelectorAll('.secondary-btn[href^="mailto:"]').forEach(link => {
+    link.addEventListener('click', () => {
+        showEmailNotification("\u00E8 stata aperta l'applicazione per inviare l'email, se non \u00E8 cos\u00EC, contattarmi via email tramite andrea46tarchiani@gmail.com");
+    });
+});
 
 // Aggiungi animazione di scroll
 const observerOptions = {
